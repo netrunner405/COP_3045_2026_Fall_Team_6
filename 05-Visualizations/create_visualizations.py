@@ -81,8 +81,10 @@ def main():
         statuses["Percent"] = (statuses.Entries / len(df) * 100).round(2)
         table_page(report, "Most Frequent Result Statuses", statuses.head(10),
                    "Top 10 statuses only; percentages use all cleaned driver-race entries as the denominator.")
-        def save(fig, name):
-            fig.tight_layout()
+        def save(fig, name, description):
+            fig.tight_layout(rect=(0, 0.28, 1, 1))
+            fig.text(0.07, 0.04, "\n".join(textwrap.wrap(description, width=110)),
+                     fontsize=9, color="#555555", va="bottom", linespacing=1.5)
             fig.savefig(OUTPUT / f"{name}.png", bbox_inches="tight")
             report.savefig(fig, bbox_inches="tight")
             plt.close(fig)
@@ -98,9 +100,17 @@ def main():
             ax.set_xlim(0, totals.max() * 1.18)
             ax.set_xlabel("Total race points")
             ax.set_title(f"Top 10 {label} by Total Race Points ({years})", loc="left")
-            ax.text(0, -0.16, "Cumulative totals reflect both performance and number of race entries.",
-                    transform=ax.transAxes, fontsize=9, color="#555555")
-            save(fig, name)
+            if column == "driverName":
+                description = (
+                    f"This chart ranks the ten drivers with the most accumulated race points in the {years} dataset. "
+                    "Longer bars indicate higher totals. These totals reflect both performance and the number of "
+                    "races entered, so they do not measure driver skill alone.")
+            else:
+                description = (
+                    f"This chart ranks the ten constructors with the most accumulated race points in the {years} dataset. "
+                    "Each total combines the team's driver entries across seasons. Longer bars indicate more points, "
+                    "with participation and performance both contributing to the totals.")
+            save(fig, name, description)
 
         # Match the finisher definition used in the team's EDA.
         finishers = df[(df.grid > 0) & df.position.notna()
@@ -116,9 +126,12 @@ def main():
         ax.set_ylabel("Finishing position (1 = winner)")
         ax.set_title(f"Starting vs. Finishing Position ({years})", loc="left")
         ax.legend(fontsize=8)
-        ax.text(0, -0.18, f"{len(finishers):,} entries; statuses: Finished, +1 Lap, +2 Laps; grid > 0.",
-                transform=ax.transAxes, fontsize=9, color="#555555")
-        save(fig, "starting_vs_finishing")
+        save(fig, "starting_vs_finishing",
+             "This density plot compares starting grid position on the horizontal axis with finishing position on "
+             "the vertical axis. Darker hexagons represent more race entries. The dashed diagonal marks unchanged "
+             "positions; entries below it gained positions, while those above it lost positions. The dark bottom-left "
+             "region shows that front starters frequently finished near the front. Only entries with grid greater "
+             "than zero and statuses Finished, +1 Lap, or +2 Laps are included.")
 
         finishers["starting_group"] = pd.cut(
             finishers.grid, bins=[0, 5, 10, 15, float("inf")],
@@ -133,9 +146,13 @@ def main():
         ax.set_xlabel("Starting grid position group")
         ax.set_ylabel("Average race points per entry")
         ax.set_title(f"Average Points by Starting Position ({years})", loc="left")
-        ax.text(0, -0.16, "Statuses: Finished, +1 Lap, +2 Laps; grid > 0. Association does not establish causation.",
-                transform=ax.transAxes, fontsize=9, color="#555555")
-        save(fig, "points_by_starting_group")
+        save(fig, "points_by_starting_group",
+             "This chart compares average race points for four starting-grid groups among the same selected finishers "
+             "(grid > 0; statuses Finished, +1 Lap, or +2 Laps). "
+             f"Drivers starting 1–5 averaged {summary.loc['1–5', 'average_points']:.2f} points per entry, compared with "
+             f"{summary.loc['16+', 'average_points']:.2f} for those starting 16 or farther back. "
+             "The n labels show the number of entries in each group. Better starting positions are associated with "
+             "higher average points in this subset; the chart does not establish causation.")
         driver_points = df.groupby("driverName").points.sum().sort_values(ascending=False)
         team_points = df.groupby("constructorName").points.sum().sort_values(ascending=False)
         correlation = finishers.grid.corr(finishers.position)
