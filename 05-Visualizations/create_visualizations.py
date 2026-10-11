@@ -74,13 +74,11 @@ def main():
             "Scope: totals describe this dataset, not a complete official championship ranking. Cumulative points depend on participation. Grid analyses use the same selected statuses as the team EDA, exclude grid 0, and show associations rather than causal effects.",
         ])
         numerical = df[["points", "grid", "position", "laps"]].describe().round(2)
-        numerical.to_csv(OUTPUT / "numerical_summary.csv")
         table_page(report, "Numerical Summary Statistics", numerical.reset_index().rename(
             columns={"index": "Statistic"}),
             "All cleaned entries. Grid 0 denotes a non-standard start and is excluded from the grid charts. Recorded position includes non-finishers.")
         statuses = df.status.value_counts().rename_axis("Status").reset_index(name="Entries")
         statuses["Percent"] = (statuses.Entries / len(df) * 100).round(2)
-        statuses.to_csv(OUTPUT / "status_summary.csv", index=False)
         table_page(report, "Most Frequent Result Statuses", statuses.head(10),
                    "Top 10 statuses only; percentages use all cleaned driver-race entries as the denominator.")
         def save(fig, name):
@@ -138,7 +136,6 @@ def main():
         ax.text(0, -0.16, "Statuses: Finished, +1 Lap, +2 Laps; grid > 0. Association does not establish causation.",
                 transform=ax.transAxes, fontsize=9, color="#555555")
         save(fig, "points_by_starting_group")
-        summary.to_csv(OUTPUT / "starting_group_summary.csv")
         driver_points = df.groupby("driverName").points.sum().sort_values(ascending=False)
         team_points = df.groupby("constructorName").points.sum().sort_values(ascending=False)
         correlation = finishers.grid.corr(finishers.position)
