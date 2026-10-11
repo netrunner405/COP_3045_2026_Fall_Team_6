@@ -204,3 +204,71 @@ status_percent.to_csv(
 
 print("\nEDA summary tables saved successfully!")
 print("Output folder:", output_dir)
+
+print("Output folder:", output_dir)
+
+# ============================================================
+# 8. STARTING GRID VS. RACE POSITION
+# ============================================================
+
+print("\n--- Starting Grid vs. Race Position ---")
+
+# Exclude non-standard starting positions (grid = 0)
+race_positions = df[
+    (df["grid"] > 0) &
+    (df["position"].notna())
+].copy()
+
+# Calculate the correlation between starting and race position
+correlation = race_positions["grid"].corr(
+    race_positions["position"]
+)
+
+print("Correlation between starting and race position:",
+      round(correlation, 3))
+
+
+# Compare starting and finishing positions for race finishers
+finishers = df[
+    (df["grid"] > 0) &
+    (df["status"].isin(["Finished", "+1 Lap", "+2 Laps"]))
+].copy()
+
+finisher_correlation = finishers["grid"].corr(
+    finishers["position"]
+)
+
+print("\nCorrelation for classified finishers:",
+      round(finisher_correlation, 3))
+
+print("Number of finishers analyzed:", len(finishers))
+
+# ============================================================
+# 9. STARTING POSITION GROUP COMPARISON
+# ============================================================
+
+print("\n--- Starting Position Group Comparison ---")
+
+# Divide drivers into starting-grid groups
+finishers["starting_group"] = pd.cut(
+    finishers["grid"],
+    bins=[0, 5, 10, 15, float("inf")],
+    labels=["1-5", "6-10", "11-15", "16+"]
+)
+
+# Calculate average recorded finishing position for each group
+grid_summary = finishers.groupby(
+    "starting_group",
+    observed=True
+).agg(
+    race_entries=("position", "count"),
+    average_finishing_position=("position", "mean"),
+    average_points=("points", "mean")
+).round(2)
+
+print(grid_summary)
+
+# Save the results for graphs and the PDF report
+grid_summary.to_csv(
+    output_dir / "starting_position_summary.csv"
+)
