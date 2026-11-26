@@ -22,6 +22,26 @@ PNGs. Report tables are calculated directly from the cleaned data and embedded
 in the PDF. Exported summary CSVs belong in `04-EDA/outputs/`; the visualization
 script does not export duplicate summaries. Rerunning replaces the PDF and PNGs.
 
+To test with a different CSV or write to another directory, use the optional
+arguments:
+
+```sh
+python 05-Visualizations/create_visualizations.py --input path/to/clean_data.csv --output-dir path/to/reports
+```
+
+The chart functions live in `f1_analysis.visualizations`. The application entry
+point can pass the cleaned pandas DataFrame directly to the report generator:
+
+```python
+from pathlib import Path
+
+from f1_analysis.report import ReportGenerator
+
+report_path = ReportGenerator(Path("05-Visualizations/outputs")).generate(cleaned_data)
+```
+
+`generate` saves the four PNGs and returns the path to the PDF.
+
 Charts compare driver and constructor cumulative race points, starting versus
 finishing position, and mean points by starting group. The grid charts match
 the team's EDA filter: grid greater than zero and statuses `Finished`, `+1 Lap`,
