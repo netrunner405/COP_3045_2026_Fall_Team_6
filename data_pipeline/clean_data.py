@@ -126,7 +126,7 @@ def main():
         inspect_data(data)
         cleaned_data = clean_and_prepare_data(data)
 
-        output_file = Path(__file__).resolve().parent / "clean_data.csv"
+        output_file = root_dir / "03-Data_Cleaning" / "clean_data.csv"
         cleaned_data.to_csv(output_file, index=False)
         print("\nClean data saved to:", output_file)
     except NameError as error:
